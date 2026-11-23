@@ -4,6 +4,30 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Upcoming Courses</title>
+
+<!-- open the connection to Google while the page is still loading -->
+<link rel="preconnect" href="https://script.google.com" crossorigin>
+<link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+<!-- built-in icon, so the browser does not make a separate favicon request -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23FF9248'/%3E%3C/svg%3E">
+
+<script>
+/* ===== SETTINGS ===== */
+var API_URL = 'https://script.google.com/macros/s/AKfycbzx0lFML0X7eBWtrOh3Zq6gbbtjQXFEu0F0s-yG9hBuGxI84sDzFveavSrXgBRqrFXh3A/exec';   // the Apps Script web app link (ends in /exec)
+var OPEN_IN_NEW_TAB = true;                      // false = open the course link in the same tab
+/* ==================== */
+
+/* Start asking Google for the course list right now, before the rest of the page is built.
+   The time-stamp on the address keeps every visit fresh (nothing is cached). */
+var AOL_DATA = null;
+(function () {
+  if (!API_URL || API_URL.indexOf('PASTE_') === 0 || /[?&]demo=1/.test(location.search)) return;
+  AOL_DATA = fetch(API_URL + (API_URL.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now())
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  AOL_DATA.catch(function () {});               // errors are handled further down
+})();
+</script>
+
 <style>
   :root {
     --text: #4A2A10; --muted: #7A5A44; --line: #F5E3D0; --panel: #FFFAF4;
@@ -21,19 +45,18 @@
     font-family: "Nunito", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   }
   .panel { max-width: 560px; margin: 0 auto; background: var(--panel); border-radius: 32px; overflow: hidden; padding-bottom: 18px; }
-  .hero { background: var(--hero-bg); padding: 18px 20px 16px;
-    border-radius: 0 0 28px 28px; display: flex; flex-direction: column; gap: 10px; }
+  .hero { background: var(--hero-bg); padding: 18px 20px 16px; border-radius: 0 0 28px 28px; display: flex; flex-direction: column; gap: 10px; }
   .logo { align-self: flex-start; min-width: 132px; height: 34px; padding: 0 14px; background: #fff; border-radius: 17px;
     display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; letter-spacing: .6px; color: #7A3A00; }
   .logo img { height: 24px; width: auto; max-width: 160px; object-fit: contain; display: block; }
   h1 { margin: 0; font-size: 28px; line-height: 1.1; font-weight: 900; color: #4A2000; }
   .tag { margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #5E2C00; }
 
-  .legend { padding: 14px 20px 4px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; }
-  .legend div { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; }
-  .sw { width: 24px; height: 14px; border-radius: 7px; border: 2px solid; flex: none; }
-  .sw.sky { background: var(--sky-fill); border-color: var(--sky-border); }
-  .sw.man { background: var(--man-fill); border-color: var(--man-border); }
+  .about { padding: 14px 20px 4px; display: grid; gap: 8px; }
+  .about p { margin: 0; font-size: 13px; line-height: 1.4; font-weight: 600; color: var(--text); }
+  .about b { font-weight: 900; }
+  .about .sky { color: var(--sky-text); }
+  .about .man { color: var(--man-text); }
 
   .nav { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px 4px; }
   .nav button { width: 44px; height: 44px; border: 2px solid #F0C9A0; border-radius: 22px; background: #FFE9D2; color: #4A2000; cursor: pointer;
@@ -41,88 +64,97 @@
   .nav button:disabled { opacity: .3; cursor: default; }
   .nav button:not(:disabled):hover { background: #FFD9B0; }
   .nav button:focus-visible { outline: 3px solid #4A2A10; outline-offset: 2px; }
-  .nav .title { font-size: 18px; font-weight: 900; color: #4A2000; text-align: center; }
-  .nav.hidden { display: none; }
+  .nav .title { font-size: 18px; font-weight: 900; color: #4A2000; text-align: center; min-height: 1.3em; }
+  .nav.hidden, .dow.hidden { display: none; }
 
   .dow { padding: 6px 20px 2px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); column-gap: 2px;
     font-size: 11px; font-weight: 700; color: var(--muted); }
-  .dow span { padding-left: 4px; }
-  .dow.hidden { display: none; }
-  .weeks { padding: 0 20px 6px; }
+  .dow span { text-align: center; }
+  .weeks { padding: 0 20px 6px; min-height: 260px; }
   .wk { border-top: 1px solid var(--line); padding-bottom: 8px; }
   .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); column-gap: 2px; row-gap: 4px; }
   .week.again { border-top: 1px dashed var(--line); margin-top: 6px; }
-  .day { grid-row: 1; padding: 4px 4px 0; font-size: 11px; color: var(--muted); }
+  .day { grid-row: 1; padding: 4px 0 0; text-align: center; font-size: 11px; color: var(--muted); }
   .day.out { opacity: .4; }
   .week.again .day { opacity: .45; }
   .day.today span { display: inline-block; min-width: 18px; padding: 0 3px; border-radius: 9px; background: #FF9248; color: #3A1800; font-weight: 800; text-align: center; }
 
   .cell { grid-row: 2; min-width: 0; align-self: start; }
-  .band { display: flex; flex-direction: column; justify-content: center; min-width: 0; min-height: 34px;
+  .band { display: flex; flex-direction: column; justify-content: center; min-width: 0; min-height: 34px; margin: 0 4px;
     padding: 3px 8px; border-width: 2px; border-style: solid; border-radius: 12px; text-decoration: none;
     box-sizing: border-box; font: inherit; }
   a.band { cursor: pointer; transition: box-shadow .12s, transform .12s; }
   a.band:hover { box-shadow: 0 3px 10px rgba(122, 58, 0, .22); transform: translateY(-1px); }
   a.band:focus-visible { outline: 3px solid #4A2A10; outline-offset: 2px; }
   .band .n { font-size: 11.5px; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
-  .band .ty { margin-left: 2px; font-size: 9px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; white-space: nowrap; }
   .band .m { font-size: 10px; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
-  .band.narrow { padding: 3px 5px; }
-  .band.narrow .n { font-size: 10.5px; }
-  .band.narrow .m { font-size: 9.5px; }
+  .band .sp { margin-top: 3px; font-size: 10px; font-style: italic; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; color: #1A47A8; }
+  .band.tight { padding: 3px 5px; }
+  .band.tight .n { font-size: 10.5px; }
+  .band.tight .m, .band.tight .sp { font-size: 9.5px; }
+  .band.narrow { padding: 3px 2px; margin: 0 2px; }
+  .band.narrow .n { font-size: 9px; letter-spacing: -.1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .band.narrow .m { font-size: 8.5px; }
   .band.online { border-style: dashed; }
-  .band.cl { border-left-width: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
-  .band.cr { border-right-width: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+  .band.cl { margin-left: 0; border-left-width: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+  .band.cr { margin-right: 0; border-right-width: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
   .t-sky { background: var(--sky-fill); border-color: var(--sky-border); color: var(--sky-text); }
   .t-mantra { background: var(--man-fill); border-color: var(--man-border); color: var(--man-text); }
   .t-other { background: var(--oth-fill); border-color: var(--oth-border); color: var(--oth-text); }
-  .band .sp { margin-top: 3px; font-size: 10px; font-style: italic; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; color: #1A47A8; }
 
   .note { padding: 26px 22px 30px; text-align: center; color: var(--muted); font-size: 15px; font-weight: 700; }
   .note.err { color: #8A2A0A; }
+
+  /* loading placeholder: keeps the layout steady until the courses arrive */
+  .sk { padding-top: 6px; }
+  .sk i { display: block; height: 58px; margin: 0 0 12px; border-radius: 14px; background: var(--line); animation: pulse 1.4s ease-in-out infinite; }
+  .sk i:nth-child(2) { width: 62%; }
+  @keyframes pulse { 50% { opacity: .45; } }
+  @media (prefers-reduced-motion: reduce) { .sk i { animation: none; } }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 </style>
 </head>
 <body>
 <div class="panel">
   <div class="hero">
-    <div class="logo" id="logo"></div>
+    <div class="logo" id="logo"><img src="logo.png" alt="Art of Living" height="24" decoding="async" onerror="this.parentNode.textContent='THE ART OF LIVING'"></div>
     <div>
       <h1>Upcoming Courses</h1>
       <p class="tag">Tap a course to register</p>
     </div>
   </div>
-  <div class="legend" aria-label="Legend">
-    <div><span class="sw sky"></span>SKY Breath Meditation</div>
-    <div><span class="sw man"></span>Mantra Meditation</div>
+  <div class="about">
+    <p><b class="sky">SKY Breath Meditation</b> &ndash; A powerful breathing technique to energize the body, calm the mind and release stress.</p>
+    <p><b class="man">Mantra Meditation</b> &ndash; A simple effortless meditation practice with a personal mantra.</p>
   </div>
-  <div class="nav hidden" id="nav">
-    <button type="button" id="prev" aria-label="Previous month">
+  <div class="nav" id="nav">
+    <button type="button" id="prev" aria-label="Previous month" disabled>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 L5 8 L10 13"/></svg>
     </button>
     <div class="title" id="monthTitle" aria-live="polite"></div>
-    <button type="button" id="next" aria-label="Next month">
+    <button type="button" id="next" aria-label="Next month" disabled>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3 L11 8 L6 13"/></svg>
     </button>
   </div>
-  <div class="dow hidden" id="dow" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
-  <div class="weeks" id="weeks"></div>
+  <div class="dow" id="dow" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+  <div class="weeks" id="weeks" aria-busy="true"><div class="sk" aria-hidden="true"><i></i><i></i><i></i></div><span class="vh">Loading courses</span></div>
 </div>
 
 <script>
 (function () {
   'use strict';
 
-  /* ===== SETTINGS ===== */
-  var API_URL  = 'https://script.google.com/macros/s/AKfycbzx0lFML0X7eBWtrOh3Zq6gbbtjQXFEu0F0s-yG9hBuGxI84sDzFveavSrXgBRqrFXh3A/exec';   // the Apps Script web app link (ends in /exec)
-  var LOGO_URL = 'logo.png';                       // the logo file in the same folder, or '' to show text
-  var OPEN_IN_NEW_TAB = true;                      // false = open the course link in the same tab
-  /* ==================== */
-
   var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   var SHORT = { sky: 'SKY', mantra: 'Mantra', other: '' };
 
-  function $(id) { return document.getElementById(id); }
+  var weeksEl = document.getElementById('weeks');
+  var navEl = document.getElementById('nav');
+  var dowEl = document.getElementById('dow');
+  var prevBtn = document.getElementById('prev');
+  var nextBtn = document.getElementById('next');
+  var titleEl = document.getElementById('monthTitle');
+
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 
   /* ---------- dates ---------- */
@@ -132,7 +164,17 @@
   function addDays(d, n) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() + n); return x; }
   function diffDays(a, b) { return Math.round((b - a) / 86400000); }
   function weekStart(d) { return addDays(d, -((d.getDay() + 6) % 7)); }      // weeks run Monday to Sunday
-  function today0() { var t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); }
+  /* "Today" is always today's date in Eastern time, wherever the visitor is. */
+  function today0() {
+    var now = new Date();
+    try {
+      var parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', year: 'numeric', month: 'numeric', day: 'numeric' }).formatToParts(now);
+      var get = function (type) { for (var i = 0; i < parts.length; i++) if (parts[i].type === type) return +parts[i].value; return NaN; };
+      var y = get('year'), m = get('month'), d = get('day');
+      if (y && m && d) return new Date(y, m - 1, d);
+    } catch (e) { /* very old browser: fall back to the visitor's own date */ }
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
 
   function fmtRange(s, e) {
     var a = parseYMD(s), b = parseYMD(e), ny = today0().getFullYear();
@@ -144,23 +186,12 @@
   }
 
   function safeUrl(u) {
+    if (!u) return '';
     try { var x = new URL(String(u)); return (x.protocol === 'http:' || x.protocol === 'https:') ? x.href : ''; } catch (e) { return ''; }
   }
   function typeOf(c) { return (c.type === 'sky' || c.type === 'mantra') ? c.type : 'other'; }
   function shortName(c) { return SHORT[typeOf(c)] || String(c.name || '').split(' ')[0]; }
   function modeLabel(c) { return c.mode === 'online' ? 'Online' : 'In person'; }
-
-  /* ---------- logo ---------- */
-  (function logo() {
-    var box = $('logo');
-    var fallback = function () { box.textContent = 'THE ART OF LIVING'; };
-    if (!LOGO_URL) { fallback(); return; }
-    var img = new Image();
-    img.alt = 'Art of Living';
-    img.onerror = fallback;
-    img.src = LOGO_URL;
-    box.appendChild(img);
-  })();
 
   /* ---------- calendar (one month at a time) ---------- */
   var state = { courses: [], months: [], idx: 0 };
@@ -185,27 +216,21 @@
     var todayS = ymd(today0());
     state.courses = courses.filter(function (c) { return c && c.start && c.end && c.end >= todayS; }).sort(sortCourses);
     state.months = monthsWithCourses(state.courses);
+    /* the calendar always opens on the current month; after it, only months that have courses */
+    var td = today0(), thisMonth = td.getFullYear() + '-' + pad(td.getMonth() + 1);
+    if (state.months.length && state.months[0] !== thisMonth) state.months.unshift(thisMonth);
     state.idx = 0;
     renderMonth();
   }
 
   function renderMonth() {
-    var weeks = $('weeks');
-    weeks.innerHTML = '';
-    var nav = $('nav'), dow = $('dow');
-
-    if (!state.months.length) {
-      nav.classList.add('hidden'); dow.classList.add('hidden');
-      weeks.appendChild(el('div', 'note', 'No upcoming courses right now. Please check back soon.'));
-      return;
-    }
-    nav.classList.remove('hidden'); dow.classList.remove('hidden');
+    if (!state.months.length) { showNote('No upcoming courses right now. Please check back soon.', false); return; }
 
     var ym = state.months[state.idx];
     var y = +ym.slice(0, 4), m = +ym.slice(5, 7) - 1;
-    $('monthTitle').textContent = MONTHS_LONG[m] + ' ' + y;
-    $('prev').disabled = state.idx === 0;
-    $('next').disabled = state.idx === state.months.length - 1;
+    titleEl.textContent = MONTHS_LONG[m] + ' ' + y;
+    prevBtn.disabled = state.idx === 0;
+    nextBtn.disabled = state.idx === state.months.length - 1;
 
     var first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
     var monthStartS = ymd(first), monthEndS = ymd(last);
@@ -242,7 +267,9 @@
       plan.push({ ws: ws, segs: segs, lanes: laneEnd.length });
     }
 
-    /* pass 2: draw. A week with overlapping courses repeats its row, one row per lane. */
+    /* pass 2: build everything off-screen, then put it on the page in one go.
+       A week with overlapping courses repeats its row, one row per lane. */
+    var frag = document.createDocumentFragment();
     plan.forEach(function (wk) {
       var block = el('div', 'wk');
       var rows = Math.max(1, wk.lanes);
@@ -251,19 +278,27 @@
         row.style.gridTemplateRows = wk.lanes ? '20px auto' : '20px';
         for (var d = 0; d < 7; d++) {
           var day = addDays(wk.ws, d);
-          var cls = 'day' + (day.getMonth() !== m ? ' out' : '') + (ymd(day) === todayS ? ' today' : '');
-          var cell = el('div', cls);
+          var cell = el('div', 'day' + (day.getMonth() !== m ? ' out' : '') + (ymd(day) === todayS ? ' today' : ''));
           cell.style.gridColumn = String(d + 1);
           cell.appendChild(el('span', null, String(day.getDate())));
           row.appendChild(cell);
         }
-        wk.segs.filter(function (sg) { return sg.lane === k; }).forEach(function (sg) {
-          row.appendChild(makeCell(sg, widest.get(sg.c) === sg));
+        wk.segs.forEach(function (sg) {
+          if (sg.lane === k) row.appendChild(makeCell(sg, widest.get(sg.c) === sg));
         });
         block.appendChild(row);
       }
-      weeks.appendChild(block);
+      frag.appendChild(block);
     });
+    if (!inMonth.length) {
+      frag.appendChild(el('div', 'note', state.idx < state.months.length - 1
+        ? 'No courses this month. Use the arrow above to see the upcoming courses.'
+        : 'No courses this month.'));
+    }
+    navEl.classList.remove('hidden'); dowEl.classList.remove('hidden');
+    weeksEl.textContent = '';
+    weeksEl.appendChild(frag);
+    weeksEl.setAttribute('aria-busy', 'false');
   }
 
   function makeCell(sg, carriesNote) {
@@ -271,7 +306,7 @@
     var narrow = sg.span === 1;
     var href = safeUrl(c.url);
     var cls = 'band t-' + typeOf(c) + (c.mode === 'online' ? ' online' : '') +
-      (sg.cl ? ' cl' : '') + (sg.cr ? ' cr' : '') + (narrow ? ' narrow' : '');
+      (sg.cl ? ' cl' : '') + (sg.cr ? ' cr' : '') + (narrow ? ' narrow' : '') + (sg.span === 2 ? ' tight' : '');
 
     var band;
     if (href) {
@@ -285,11 +320,8 @@
       band.appendChild(el('span', 'n', shortName(c)));                                 /* too narrow for the type beside the name */
       band.appendChild(el('span', 'm', sg.cl ? 'cont.' : modeLabel(c)));
     } else {
-      var line1 = el('span', 'n', c.name);
-      line1.appendChild(document.createTextNode(' '));
-      line1.appendChild(el('span', 'ty', '\u00b7 ' + modeLabel(c)));                  /* "· ONLINE" / "· IN PERSON" beside the course name */
-      band.appendChild(line1);
-      if (c.mode !== 'online' && c.location) band.appendChild(el('span', 'm', c.location));
+      band.appendChild(el('span', 'n', c.name));                                      /* line 1: course name */
+      band.appendChild(el('span', 'm', modeLabel(c) + ((c.mode !== 'online' && c.location) ? ' \u00b7 ' + c.location : '')));   /* line 2: type · location */
     }
     if (carriesNote && c.notes) band.appendChild(el('span', 'sp', c.notes));
 
@@ -305,8 +337,8 @@
     return cell;
   }
 
-  $('prev').addEventListener('click', function () { if (state.idx > 0) { state.idx--; renderMonth(); } });
-  $('next').addEventListener('click', function () { if (state.idx < state.months.length - 1) { state.idx++; renderMonth(); } });
+  prevBtn.addEventListener('click', function () { if (state.idx > 0) { state.idx--; renderMonth(); } });
+  nextBtn.addEventListener('click', function () { if (state.idx < state.months.length - 1) { state.idx++; renderMonth(); } });
 
   /* ---------- loading data ---------- */
   function jsonp(url, timeoutMs) {
@@ -317,27 +349,27 @@
       function cleanup() { clearTimeout(timer); delete window[name]; if (s.parentNode) s.parentNode.removeChild(s); }
       window[name] = function (data) { cleanup(); resolve(data); };
       s.onerror = function () { cleanup(); reject(new Error('script error')); };
-      s.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + name;
+      s.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + name + '&t=' + Date.now();
       document.head.appendChild(s);
     });
   }
 
+  /* the request was already started in the page head; only if it fails do we try the backup route */
   function loadData() {
-    var url = API_URL + (API_URL.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
-    return fetch(url).then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    }).catch(function () { return jsonp(API_URL, 12000); });
+    return AOL_DATA.catch(function () { return jsonp(API_URL, 12000); });
   }
 
   function demoData() {
     var t = today0();
     var d = function (n) { return ymd(addDays(t, n)); };
     var mk = function (id, name, type, mode, s, loc, notes) {
-      return { id: id, name: name, type: type, mode: mode, start: d(s), end: d(s + 2), location: loc || '', notes: notes || '', url: 'https://members.us.artofliving.org/us-en/course/' + id };
+      var c = { name: name, type: type, mode: mode, start: d(s), end: d(s + 2), url: 'https://members.us.artofliving.org/us-en/course/' + id };
+      if (loc) c.location = loc;
+      if (notes) c.notes = notes;
+      return c;
     };
     var SKY = 'SKY Breath Meditation', MAN = 'Mantra Meditation';
-    return { ok: true, courses: [
+    return [
       mk('demo0', SKY, 'sky', 'online', -9),
       mk('demo1', SKY, 'sky', 'online', 3),
       mk('demo2', MAN, 'mantra', 'online', 4, '', 'with Bhanu ma'),
@@ -347,23 +379,23 @@
       mk('demo6', MAN, 'mantra', 'online', 17),
       mk('demo7', SKY, 'sky', 'online', 24),
       mk('demo8', MAN, 'mantra', 'inperson', 70, 'Ashburn, VA')
-    ] };
+    ];
   }
 
   function showNote(msg, isErr) {
-    $('nav').classList.add('hidden');
-    $('dow').classList.add('hidden');
-    $('weeks').innerHTML = '';
-    $('weeks').appendChild(el('div', 'note' + (isErr ? ' err' : ''), msg));
+    navEl.classList.add('hidden');
+    dowEl.classList.add('hidden');
+    weeksEl.textContent = '';
+    weeksEl.appendChild(el('div', 'note' + (isErr ? ' err' : ''), msg));
+    weeksEl.setAttribute('aria-busy', 'false');
   }
 
   function start() {
-    if (/[?&]demo=1/.test(location.search)) { setCourses(demoData().courses); return; }
-    if (!API_URL || API_URL.indexOf('PASTE_') === 0) {
+    if (/[?&]demo=1/.test(location.search)) { setCourses(demoData()); return; }
+    if (!AOL_DATA) {
       showNote('Setup needed: open index.html and paste your Apps Script web app link into API_URL. (Add ?demo=1 to the page address to preview with sample courses.)', true);
       return;
     }
-    showNote('Loading courses\u2026', false);
     loadData().then(function (data) {
       if (!data || data.ok === false) throw new Error(data && data.error ? data.error : 'bad response');
       setCourses(Array.isArray(data.courses) ? data.courses : []);
