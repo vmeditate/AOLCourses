@@ -287,7 +287,7 @@
     } else {
       var line1 = el('span', 'n', c.name);
       line1.appendChild(document.createTextNode(' '));
-      line1.appendChild(el('span', 'ty', modeLabel(c)));                               /* type beside the course name */
+      line1.appendChild(el('span', 'ty', '\u00b7 ' + modeLabel(c)));                  /* "· ONLINE" / "· IN PERSON" beside the course name */
       band.appendChild(line1);
       if (c.mode !== 'online' && c.location) band.appendChild(el('span', 'm', c.location));
     }
