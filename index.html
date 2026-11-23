@@ -7,6 +7,8 @@
 <style>
   :root {
     --text: #4A2A10; --muted: #7A5A44; --line: #F5E3D0; --panel: #FFFAF4;
+    --page-bg: linear-gradient(160deg, #FFE3C2 0%, #FFC796 100%);      /* page background gradient */
+    --hero-bg: linear-gradient(135deg, #FFC983 0%, #FF9248 100%);      /* header band gradient */
     --sky-fill: #EBE0C5; --sky-border: #A89355; --sky-text: #4A3F18;
     --man-fill: #E6CFD6; --man-border: #A5667C; --man-text: #55243A;
     --oth-fill: #ECE7E0; --oth-border: #948B7C; --oth-text: #3D3A33;
@@ -15,11 +17,11 @@
   html, body { margin: 0; }
   body {
     min-height: 100vh; padding: 20px 14px 40px; color: var(--text);
-    background: linear-gradient(160deg, #FFE3C2 0%, #FFC796 100%) fixed;
+    background: var(--page-bg) fixed;
     font-family: "Nunito", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   }
   .panel { max-width: 560px; margin: 0 auto; background: var(--panel); border-radius: 32px; overflow: hidden; padding-bottom: 18px; }
-  .hero { background: linear-gradient(135deg, #FFC983 0%, #FF9248 100%); padding: 18px 20px 16px;
+  .hero { background: var(--hero-bg); padding: 18px 20px 16px;
     border-radius: 0 0 28px 28px; display: flex; flex-direction: column; gap: 10px; }
   .logo { align-self: flex-start; min-width: 132px; height: 34px; padding: 0 14px; background: #fff; border-radius: 17px;
     display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; letter-spacing: .6px; color: #7A3A00; }
@@ -73,7 +75,7 @@
   .t-sky { background: var(--sky-fill); border-color: var(--sky-border); color: var(--sky-text); }
   .t-mantra { background: var(--man-fill); border-color: var(--man-border); color: var(--man-text); }
   .t-other { background: var(--oth-fill); border-color: var(--oth-border); color: var(--oth-text); }
-  .special { margin: 3px 3px 0; font-size: 10.5px; font-style: italic; font-weight: 700; line-height: 1.25; color: var(--muted); overflow-wrap: anywhere; }
+  .band .sp { margin-top: 3px; font-size: 10px; font-style: italic; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; opacity: .92; }
 
   .note { padding: 26px 22px 30px; text-align: center; color: var(--muted); font-size: 15px; font-weight: 700; }
   .note.err { color: #8A2A0A; }
@@ -281,6 +283,7 @@
     band.appendChild(el('span', 'n', narrow ? shortName(c) : c.name));
     var typeLine = modeLabel(c) + ((c.mode !== 'online' && c.location && !narrow) ? ' \u00b7 ' + c.location : '');
     band.appendChild(el('span', 'm', (narrow && sg.cl) ? 'cont.' : typeLine));
+    if (carriesNote && c.notes) band.appendChild(el('span', 'sp', c.notes));
 
     var label = c.name + ', ' + modeLabel(c) + (c.mode !== 'online' && c.location ? ' in ' + c.location : '') + ', ' + fmtRange(c.start, c.end);
     if (c.notes) label += ', ' + c.notes;
@@ -291,7 +294,6 @@
     var cell = el('div', 'cell');
     cell.style.gridColumn = sg.col + ' / span ' + sg.span;
     cell.appendChild(band);
-    if (carriesNote && c.notes) cell.appendChild(el('div', 'special', c.notes));
     return cell;
   }
 
