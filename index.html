@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Upcoming Courses</title>
+<style>
+  :root {
+    --text: #4A2A10; --muted: #7A5A44; --line: #F5E3D0; --panel: #FFFAF4;
+    --sky-fill: #EBE0C5; --sky-border: #A89355; --sky-text: #4A3F18;
+    --man-fill: #E6CFD6; --man-border: #A5667C; --man-text: #55243A;
+    --oth-fill: #ECE7E0; --oth-border: #948B7C; --oth-text: #3D3A33;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh; padding: 20px 14px 40px; color: var(--text);
+    background: linear-gradient(160deg, #FFE3C2 0%, #FFC796 100%) fixed;
+    font-family: "Nunito", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  }
+  .panel { max-width: 560px; margin: 0 auto; background: var(--panel); border-radius: 32px; overflow: hidden; }
+  .hero { background: linear-gradient(135deg, #FFC983 0%, #FF9248 100%); padding: 18px 20px 16px;
+    border-radius: 0 0 28px 28px; display: flex; flex-direction: column; gap: 10px; }
+  .logo { align-self: flex-start; min-width: 132px; height: 34px; padding: 0 14px; background: #fff; border-radius: 17px;
+    display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; letter-spacing: .6px; color: #7A3A00; }
+  .logo img { height: 24px; width: auto; max-width: 160px; object-fit: contain; display: block; }
+  h1 { margin: 0; font-size: 28px; line-height: 1.1; font-weight: 900; color: #4A2000; }
+  .tag { margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #5E2C00; }
+
+  .legend { padding: 14px 20px 8px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; }
+  .legend div { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; }
+  .sw { width: 24px; height: 14px; border-radius: 7px; border: 2px solid; flex: none; }
+  .sw.sky { background: var(--sky-fill); border-color: var(--sky-border); }
+  .sw.man { background: var(--man-fill); border-color: var(--man-border); }
+  .sw.dash { background: #fff; border: 2px dashed var(--muted); }
+  .sw.solid { background: #fff; border: 2px solid var(--muted); }
+
+  .month { padding: 6px 20px 4px; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+  .dow { padding: 0 20px 2px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); column-gap: 2px;
+    font-size: 11px; font-weight: 700; color: var(--muted); }
+  .dow span { padding-left: 4px; }
+  .weeks { padding: 0 20px 14px; }
+  .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); column-gap: 2px; row-gap: 4px;
+    padding-bottom: 8px; border-top: 1px solid var(--line); }
+  .day { grid-row: 1; padding: 4px 4px 0; font-size: 11px; color: var(--muted); }
+  .day.first { font-weight: 800; color: var(--text); }
+  .day.today span { display: inline-block; min-width: 18px; padding: 0 3px; border-radius: 9px; background: #FF9248; color: #3A1800; font-weight: 800; text-align: center; }
+
+  .cell { min-width: 0; align-self: start; }
+  .band { display: flex; flex-direction: column; justify-content: center; min-width: 0; min-height: 34px;
+    padding: 3px 8px; border-width: 2px; border-style: solid; border-radius: 12px; text-decoration: none;
+    box-sizing: border-box; font: inherit; }
+  a.band { cursor: pointer; transition: box-shadow .12s, transform .12s; }
+  a.band:hover { box-shadow: 0 3px 10px rgba(122, 58, 0, .22); transform: translateY(-1px); }
+  a.band:focus-visible { outline: 3px solid #4A2A10; outline-offset: 2px; }
+  .band .n { font-size: 11.5px; font-weight: 800; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .band .m { font-size: 10px; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
+  .band.narrow { padding: 3px 5px; }
+  .band.narrow .n { font-size: 10.5px; }
+  .band.narrow .m { font-size: 9.5px; }
+  .band.online { border-style: dashed; }
+  .band.cl { border-left-width: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+  .band.cr { border-right-width: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+  .t-sky { background: var(--sky-fill); border-color: var(--sky-border); color: var(--sky-text); }
+  .t-mantra { background: var(--man-fill); border-color: var(--man-border); color: var(--man-text); }
+  .t-other { background: var(--oth-fill); border-color: var(--oth-border); color: var(--oth-text); }
+  .special { margin: 3px 3px 0; font-size: 10.5px; font-style: italic; font-weight: 700; line-height: 1.25; color: var(--muted); overflow-wrap: anywhere; }
+
+  .note { padding: 26px 22px 30px; text-align: center; color: var(--muted); font-size: 15px; font-weight: 700; }
+  .note.err { color: #8A2A0A; }
+  .foot { padding: 0 20px 16px; text-align: center; font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="hero">
+    <div class="logo" id="logo"></div>
+    <div>
+      <h1>Upcoming Courses</h1>
+      <p class="tag">Tap a course to register</p>
+    </div>
+  </div>
+  <div class="legend" aria-label="Legend">
+    <div><span class="sw sky"></span>SKY Breath Meditation</div>
+    <div><span class="sw man"></span>Mantra Meditation</div>
+    <div><span class="sw dash"></span>Online</div>
+    <div><span class="sw solid"></span>In person</div>
+  </div>
+  <div class="month" id="month"></div>
+  <div class="dow" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+  <div class="weeks" id="weeks"></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ===== SETTINGS: edit these two lines ===== */
+  var API_URL  = 'https://script.google.com/macros/s/AKfycbzx0lFML0X7eBWtrOh3Zq6gbbtjQXFEu0F0s-yG9hBuGxI84sDzFveavSrXgBRqrFXh3A/exec';   // the Apps Script web app link (ends in /exec)
+  var LOGO_URL = 'logo.png';                       // the logo file in the same folder, or '' to show text
+  /* ========================================= */
+
+  var OPEN_IN_NEW_TAB = true;                      // false = open the course link in the same tab
+
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var SHORT = { sky: 'SKY', mantra: 'Mantra', other: '' };
+  var MAX_WEEKS = 30;
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+  /* ---------- dates ---------- */
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function parseYMD(s) { var p = String(s).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function addDays(d, n) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() + n); return x; }
+  function diffDays(a, b) { return Math.round((b - a) / 86400000); }
+  function weekStart(d) { return addDays(d, -d.getDay()); }
+  function today0() { var t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); }
+
+  function fmtRange(s, e) {
+    var a = parseYMD(s), b = parseYMD(e), ny = today0().getFullYear();
+    var yr = function (d) { return d.getFullYear() !== ny ? ', ' + d.getFullYear() : ''; };
+    if (s === e) return MONTHS[a.getMonth()] + ' ' + a.getDate() + yr(a);
+    if (a.getFullYear() !== b.getFullYear()) return MONTHS[a.getMonth()] + ' ' + a.getDate() + ', ' + a.getFullYear() + ' \u2013 ' + MONTHS[b.getMonth()] + ' ' + b.getDate() + ', ' + b.getFullYear();
+    if (a.getMonth() === b.getMonth()) return MONTHS[a.getMonth()] + ' ' + a.getDate() + ' \u2013 ' + b.getDate() + yr(a);
+    return MONTHS[a.getMonth()] + ' ' + a.getDate() + ' \u2013 ' + MONTHS[b.getMonth()] + ' ' + b.getDate() + yr(a);
+  }
+
+  function safeUrl(u) {
+    try { var x = new URL(String(u)); return (x.protocol === 'http:' || x.protocol === 'https:') ? x.href : ''; } catch (e) { return ''; }
+  }
+  function typeOf(c) { return (c.type === 'sky' || c.type === 'mantra') ? c.type : 'other'; }
+  function shortName(c) { return SHORT[typeOf(c)] || String(c.name || '').split(' ')[0]; }
+  function modeLabel(c) { return c.mode === 'online' ? 'Online' : 'In person'; }
+
+  /* ---------- logo ---------- */
+  (function logo() {
+    var box = $('logo');
+    var fallback = function () { box.textContent = 'THE ART OF LIVING'; };
+    if (!LOGO_URL) { fallback(); return; }
+    var img = new Image();
+    img.alt = 'Art of Living';
+    img.onerror = fallback;
+    img.src = LOGO_URL;
+    box.appendChild(img);
+  })();
+
+  /* ---------- calendar ---------- */
+  function sortCourses(a, b) {
+    if (a.start !== b.start) return a.start < b.start ? -1 : 1;
+    if (a.end !== b.end) return a.end < b.end ? -1 : 1;
+    return String(a.name).localeCompare(String(b.name));
+  }
+
+  function monthLabel(first, last) {
+    if (first.getFullYear() === last.getFullYear() && first.getMonth() === last.getMonth()) return MONTHS_LONG[first.getMonth()] + ' ' + first.getFullYear();
+    if (first.getFullYear() === last.getFullYear()) return MONTHS[first.getMonth()] + ' \u2013 ' + MONTHS[last.getMonth()] + ' ' + first.getFullYear();
+    return MONTHS[first.getMonth()] + ' ' + first.getFullYear() + ' \u2013 ' + MONTHS[last.getMonth()] + ' ' + last.getFullYear();
+  }
+
+  function render(courses) {
+    var weeks = $('weeks');
+    weeks.innerHTML = '';
+    var todayS = ymd(today0());
+    var vis = courses.filter(function (c) { return c && c.start && c.end && c.end >= todayS; }).sort(sortCourses);
+
+    if (!vis.length) {
+      $('month').textContent = '';
+      weeks.appendChild(el('div', 'note', 'No upcoming courses right now. Please check back soon.'));
+      return;
+    }
+
+    var gridStart = weekStart(parseYMD(vis[0].start));
+    var lastEnd = vis.reduce(function (m, c) { return c.end > m ? c.end : m; }, vis[0].end);
+    var nWeeks = Math.min(MAX_WEEKS, Math.floor(diffDays(gridStart, weekStart(parseYMD(lastEnd))) / 7) + 1);
+    $('month').textContent = monthLabel(gridStart, addDays(gridStart, nWeeks * 7 - 1));
+
+    /* pass 1: cut every course into week segments and give each a lane */
+    var plan = [];
+    var widest = new Map();                      // course -> its widest segment (that one carries the special note)
+    for (var w = 0; w < nWeeks; w++) {
+      var ws = addDays(gridStart, w * 7), we = addDays(ws, 6);
+      var wsS = ymd(ws), weS = ymd(we);
+      var segs = [];
+      vis.forEach(function (c) {
+        if (c.end < wsS || c.start > weS) return;
+        var s = c.start < wsS ? ws : parseYMD(c.start);
+        var e = c.end > weS ? we : parseYMD(c.end);
+        var sg = { c: c, col: diffDays(ws, s) + 1, span: diffDays(s, e) + 1, cl: c.start < wsS, cr: c.end > weS };
+        segs.push(sg);
+        var best = widest.get(c);
+        if (!best || sg.span > best.span) widest.set(c, sg);
+      });
+      segs.sort(function (a, b) { return a.col - b.col || b.span - a.span; });
+      var laneEnd = [];
+      segs.forEach(function (sg) {
+        var lane = 0;
+        while (laneEnd[lane] !== undefined && laneEnd[lane] >= sg.col) lane++;
+        laneEnd[lane] = sg.col + sg.span - 1;
+        sg.lane = lane;
+      });
+      plan.push({ ws: ws, segs: segs, lanes: laneEnd.length });
+    }
+
+    /* pass 2: draw */
+    plan.forEach(function (wk, w) {
+      var row = el('div', 'week');
+      row.style.gridTemplateRows = '20px' + (wk.lanes ? ' repeat(' + wk.lanes + ', auto)' : '');
+      for (var d = 0; d < 7; d++) {
+        var day = addDays(wk.ws, d);
+        var showMonth = day.getDate() === 1 || (w === 0 && d === 0);
+        var cell = el('div', 'day' + (showMonth ? ' first' : '') + (ymd(day) === todayS ? ' today' : ''));
+        cell.style.gridColumn = String(d + 1);
+        cell.appendChild(el('span', null, showMonth ? MONTHS[day.getMonth()] + ' ' + day.getDate() : String(day.getDate())));
+        row.appendChild(cell);
+      }
+      wk.segs.forEach(function (sg) { row.appendChild(makeCell(sg, widest.get(sg.c) === sg)); });
+      weeks.appendChild(row);
+    });
+  }
+
+  function makeCell(sg, carriesNote) {
+    var c = sg.c;
+    var narrow = sg.span === 1;
+    var href = safeUrl(c.url);
+    var cls = 'band t-' + typeOf(c) + (c.mode === 'online' ? ' online' : '') +
+      (sg.cl ? ' cl' : '') + (sg.cr ? ' cr' : '') + (narrow ? ' narrow' : '');
+
+    var band;
+    if (href) {
+      band = el('a', cls);
+      band.href = href;
+      if (OPEN_IN_NEW_TAB) { band.target = '_blank'; band.rel = 'noopener noreferrer'; }
+    } else {
+      band = el('div', cls);
+    }
+    band.appendChild(el('span', 'n', narrow ? shortName(c) : c.name));
+    var typeLine = modeLabel(c) + ((c.mode !== 'online' && c.location && !narrow) ? ' \u00b7 ' + c.location : '');
+    band.appendChild(el('span', 'm', (narrow && sg.cl) ? 'cont.' : typeLine));
+
+    var label = c.name + ', ' + modeLabel(c) + (c.mode !== 'online' && c.location ? ' in ' + c.location : '') + ', ' + fmtRange(c.start, c.end);
+    if (c.notes) label += ', ' + c.notes;
+    if (href) label += '. Opens the course page';
+    band.setAttribute('aria-label', label);
+    if (c.mode !== 'online' && c.location) band.title = c.location;
+
+    var cell = el('div', 'cell');
+    cell.style.gridRow = String(sg.lane + 2);
+    cell.style.gridColumn = sg.col + ' / span ' + sg.span;
+    cell.appendChild(band);
+    if (carriesNote && c.notes) cell.appendChild(el('div', 'special', c.notes));
+    return cell;
+  }
+
+  /* ---------- loading data ---------- */
+  function jsonp(url, timeoutMs) {
+    return new Promise(function (resolve, reject) {
+      var name = '__aolCb' + Date.now();
+      var s = document.createElement('script');
+      var timer = setTimeout(function () { cleanup(); reject(new Error('timeout')); }, timeoutMs);
+      function cleanup() { clearTimeout(timer); delete window[name]; if (s.parentNode) s.parentNode.removeChild(s); }
+      window[name] = function (data) { cleanup(); resolve(data); };
+      s.onerror = function () { cleanup(); reject(new Error('script error')); };
+      s.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + name;
+      document.head.appendChild(s);
+    });
+  }
+
+  function loadData() {
+    var url = API_URL + (API_URL.indexOf('?') >= 0 ? '&' : '?') + 't=' + Date.now();
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).catch(function () { return jsonp(API_URL, 12000); });
+  }
+
+  function demoData() {
+    var t = today0();
+    var d = function (n) { return ymd(addDays(t, n)); };
+    var mk = function (id, name, type, mode, s, loc, notes) {
+      return { id: id, name: name, type: type, mode: mode, start: d(s), end: d(s + 2), location: loc || '', notes: notes || '', url: 'https://members.us.artofliving.org/us-en/course/' + id };
+    };
+    var SKY = 'SKY Breath Meditation', MAN = 'Mantra Meditation';
+    return { ok: true, updated: new Date().toISOString(), courses: [
+      mk('demo0', SKY, 'sky', 'online', -9),
+      mk('demo1', SKY, 'sky', 'online', 3),
+      mk('demo2', MAN, 'mantra', 'online', 4, '', 'with Bhanu ma'),
+      mk('demo3', SKY, 'sky', 'inperson', 6, 'Reston, VA'),
+      mk('demo4', MAN, 'mantra', 'inperson', 13, 'Ashburn, VA', 'with Bhushan'),
+      mk('demo5', SKY, 'sky', 'inperson', 13, 'Ashburn, VA'),
+      mk('demo6', MAN, 'mantra', 'online', 17),
+      mk('demo7', SKY, 'sky', 'online', 24)
+    ] };
+  }
+
+  function showNote(msg, isErr) {
+    $('month').textContent = '';
+    $('weeks').innerHTML = '';
+    $('weeks').appendChild(el('div', 'note' + (isErr ? ' err' : ''), msg));
+  }
+
+  function start() {
+    if (/[?&]demo=1/.test(location.search)) {
+      render(demoData().courses);
+      $('foot').textContent = 'Demo data';
+      return;
+    }
+    if (!API_URL || API_URL.indexOf('PASTE_') === 0) {
+      showNote('Setup needed: open index.html and paste your Apps Script web app link into API_URL. (Add ?demo=1 to the page address to preview with sample courses.)', true);
+      return;
+    }
+    showNote('Loading courses\u2026', false);
+    loadData().then(function (data) {
+      if (!data || data.ok === false) throw new Error(data && data.error ? data.error : 'bad response');
+      render(Array.isArray(data.courses) ? data.courses : []);
+      if (data.updated) {
+        var u = new Date(data.updated);
+        if (!isNaN(u)) $('foot').textContent = 'Updated ' + MONTHS[u.getMonth()] + ' ' + u.getDate() + ', ' + u.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      }
+    }).catch(function () {
+      showNote('Sorry, the course list could not be loaded right now. Please try again in a few minutes.', true);
+    });
+  }
+
+  start();
+})();
+</script>
+</body>
+</html>
