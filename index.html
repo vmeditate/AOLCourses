@@ -64,7 +64,8 @@
   a.band { cursor: pointer; transition: box-shadow .12s, transform .12s; }
   a.band:hover { box-shadow: 0 3px 10px rgba(122, 58, 0, .22); transform: translateY(-1px); }
   a.band:focus-visible { outline: 3px solid #4A2A10; outline-offset: 2px; }
-  .band .n { font-size: 11.5px; font-weight: 800; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .band .n { font-size: 11.5px; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
+  .band .ty { margin-left: 2px; font-size: 9px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; white-space: nowrap; }
   .band .m { font-size: 10px; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
   .band.narrow { padding: 3px 5px; }
   .band.narrow .n { font-size: 10.5px; }
@@ -75,7 +76,7 @@
   .t-sky { background: var(--sky-fill); border-color: var(--sky-border); color: var(--sky-text); }
   .t-mantra { background: var(--man-fill); border-color: var(--man-border); color: var(--man-text); }
   .t-other { background: var(--oth-fill); border-color: var(--oth-border); color: var(--oth-text); }
-  .band .sp { margin-top: 3px; font-size: 10px; font-style: italic; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; opacity: .92; }
+  .band .sp { margin-top: 3px; font-size: 10px; font-style: italic; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; color: #1A47A8; }
 
   .note { padding: 26px 22px 30px; text-align: center; color: var(--muted); font-size: 15px; font-weight: 700; }
   .note.err { color: #8A2A0A; }
@@ -280,9 +281,16 @@
     } else {
       band = el('div', cls);
     }
-    band.appendChild(el('span', 'n', narrow ? shortName(c) : c.name));
-    var typeLine = modeLabel(c) + ((c.mode !== 'online' && c.location && !narrow) ? ' \u00b7 ' + c.location : '');
-    band.appendChild(el('span', 'm', (narrow && sg.cl) ? 'cont.' : typeLine));
+    if (narrow) {
+      band.appendChild(el('span', 'n', shortName(c)));                                 /* too narrow for the type beside the name */
+      band.appendChild(el('span', 'm', sg.cl ? 'cont.' : modeLabel(c)));
+    } else {
+      var line1 = el('span', 'n', c.name);
+      line1.appendChild(document.createTextNode(' '));
+      line1.appendChild(el('span', 'ty', modeLabel(c)));                               /* type beside the course name */
+      band.appendChild(line1);
+      if (c.mode !== 'online' && c.location) band.appendChild(el('span', 'm', c.location));
+    }
     if (carriesNote && c.notes) band.appendChild(el('span', 'sp', c.notes));
 
     var label = c.name + ', ' + modeLabel(c) + (c.mode !== 'online' && c.location ? ' in ' + c.location : '') + ', ' + fmtRange(c.start, c.end);
