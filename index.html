@@ -53,8 +53,10 @@ var AOL_DATA = null;
   h1 { margin: 0; font-size: 28px; line-height: 1.1; font-weight: 900; color: #4A2000; }
   .tag { margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #5E2C00; }
 
-  .about { padding: 14px 20px 4px; display: grid; gap: 8px; }
-  .about p { margin: 0; font-size: 13px; line-height: 1.4; font-weight: 600; color: var(--text); }
+  .about { padding: 14px 20px 4px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .about p { min-width: 0; }
+  .about p { margin: 0; font-size: 13px; line-height: 1.4; font-weight: 600; color: var(--text); white-space: nowrap; }
+  .about p.wrap { white-space: normal; }
   .about b { font-weight: 900; }
   .about .sky { color: var(--sky-text); }
   .about .man { color: var(--man-text); }
@@ -134,9 +136,13 @@ var AOL_DATA = null;
       <p class="tag">Tap a course to register</p>
     </div>
   </div>
+  <!-- Each description is fitted onto ONE line by the script below. The longer original wording was:
+       SKY Breath Meditation - A powerful breathing technique to energize the body, calm the mind and release stress.
+       Mantra Meditation - A simple effortless meditation practice with a personal mantra.
+       (too long for one line on a phone; hover text still shows the full SKY sentence on a computer) -->
   <div class="about">
-    <p><b class="sky">SKY Breath Meditation</b> &ndash; A powerful breathing technique to energize the body, calm the mind and release stress.</p>
-    <p><b class="man">Mantra Meditation</b> &ndash; A simple effortless meditation practice with a personal mantra.</p>
+    <p title="A powerful breathing technique to energize the body, calm the mind and release stress."><b class="sky">SKY Breath Meditation</b> &ndash; Breathe to energize and calm the mind.</p>
+    <p title="A simple effortless meditation practice with a personal mantra."><b class="man">Mantra Meditation</b> &ndash; Simple meditation with a personal mantra.</p>
   </div>
   <div class="nav" id="nav">
     <button type="button" id="prev" aria-label="Previous month" disabled>
@@ -385,11 +391,36 @@ var AOL_DATA = null;
       pending = again2;
     }
   }
+  /* The two course descriptions at the top: keep each on ONE line by shrinking the text to fit (never below
+     ABOUT_MIN_PX). If a screen is so narrow that even that is not enough, the line wraps instead of being cut. */
+  var ABOUT_MIN_PX = 9;
+  function fitAbout() {
+    try {
+      var list = document.querySelectorAll('.about p'), pending = [], i;
+      for (i = 0; i < list.length; i++) { list[i].style.fontSize = ''; list[i].classList.remove('wrap'); pending.push(list[i]); }
+      for (var round = 0; round < 8 && pending.length; round++) {
+        var m = pending.map(function (e) { return [titleWidth(e), e.clientWidth, fontPx(e)]; });
+        var again = [];
+        pending.forEach(function (e, j) {
+          var tw = m[j][0], cw = m[j][1], fs = m[j][2];
+          if (cw > 0 && tw > cw - 1) {
+            var size = Math.floor(fs * (cw - 2) / tw * 10) / 10;
+            if (size >= ABOUT_MIN_PX) { e.style.fontSize = size + 'px'; again.push(e); }
+            else { e.style.fontSize = ''; e.classList.add('wrap'); }
+          }
+        });
+        pending = again;
+      }
+      pending.forEach(function (e) { e.style.fontSize = ''; e.classList.add('wrap'); });
+    } catch (err) { /* cosmetic only */ }
+  }
+  function fitAll() { fitTitles(); fitAbout(); }
+
   var resizeTimer = null;
-  window.addEventListener('resize', function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(fitTitles, 120); });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitles);
-  window.addEventListener('load', fitTitles);
-  window.addEventListener('orientationchange', function () { setTimeout(fitTitles, 250); });
+  window.addEventListener('resize', function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(fitAll, 120); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll);
+  window.addEventListener('load', fitAll);
+  window.addEventListener('orientationchange', function () { setTimeout(fitAll, 250); });
 
   function makeCell(sg, carriesNote) {
     var c = sg.c;
@@ -494,6 +525,7 @@ var AOL_DATA = null;
     });
   }
 
+  fitAbout();
   start();
 })();
 </script>
