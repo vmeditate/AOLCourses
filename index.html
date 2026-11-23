@@ -74,9 +74,13 @@ var AOL_DATA = null;
   .wk { border-top: 1px solid var(--line); padding-bottom: 8px; }
   .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); column-gap: 2px; row-gap: 4px; }
   .week.again { border-top: 1px dashed var(--line); margin-top: 6px; }
-  .day { grid-row: 1; padding: 4px 0 0; text-align: center; font-size: 11px; font-weight: 800; color: var(--muted); }
+  .day { grid-row: 1; padding: 4px 0 0; text-align: center; font-size: 11px; font-weight: 500; color: var(--muted); }
   .day.out { opacity: .4; }
   .week.again .day { opacity: .45; }
+  /* only dates that have a course on them are bold and darker */
+  .day.cov { font-weight: 800; color: var(--text); }
+  .day.cov.out { opacity: .6; }
+  .week.again .day.cov { opacity: 1; }
   .day.today span { display: inline-block; min-width: 18px; padding: 0 3px; border-radius: 9px; background: #FF9248; color: #3A1800; font-weight: 800; text-align: center; }
 
   .cell { grid-row: 2; min-width: 0; align-self: start; }
@@ -282,9 +286,16 @@ var AOL_DATA = null;
       for (var k = 0; k < rows; k++) {
         var row = el('div', 'week' + (k > 0 ? ' again' : ''));
         row.style.gridTemplateRows = wk.lanes ? '20px auto' : '20px';
+        /* a date is a "course date" if a course runs on it: in the first row of a week that means any course,
+           in a repeated row only the course shown in that row */
+        var courseDay = {};
+        wk.segs.forEach(function (sg) {
+          if (k === 0 || sg.lane === k) for (var q = 0; q < sg.span; q++) courseDay[sg.col + q] = true;
+        });
         for (var d = 0; d < 7; d++) {
           var day = addDays(wk.ws, d);
-          var cell = el('div', 'day' + (day.getMonth() !== m ? ' out' : '') + (ymd(day) === todayS ? ' today' : ''));
+          var cell = el('div', 'day' + (day.getMonth() !== m ? ' out' : '') + (ymd(day) === todayS ? ' today' : '') +
+            (courseDay[d + 1] ? ' cov' : ''));
           cell.style.gridColumn = String(d + 1);
           cell.appendChild(el('span', null, String(day.getDate())));
           row.appendChild(cell);
