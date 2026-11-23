@@ -39,6 +39,7 @@ var AOL_DATA = null;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   body {
     min-height: 100vh; padding: 20px 14px 40px; color: var(--text);
     background: var(--page-bg) fixed;
@@ -90,7 +91,7 @@ var AOL_DATA = null;
   a.band { cursor: pointer; transition: box-shadow .12s, transform .12s; }
   a.band:hover { box-shadow: 0 3px 10px rgba(122, 58, 0, .22); transform: translateY(-1px); }
   a.band:focus-visible { outline: 3px solid #4A2A10; outline-offset: 2px; }
-  .band .n { font-size: 11.5px; font-weight: 800; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .band .n { font-size: clamp(8.5px, 2.5vw, 11.5px); font-weight: 800; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .band.tight .n, .band .n.wrap { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: normal; }   /* wrap on whole words, never cut the title */
   .band .m { font-size: 10px; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
   .band .sp { margin-top: 3px; font-size: 10px; font-style: italic; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; color: #1A47A8; }
@@ -317,40 +318,78 @@ var AOL_DATA = null;
     weeksEl.appendChild(frag);
     weeksEl.setAttribute('aria-busy', 'false');
     fitTitles();
+    if (window.requestAnimationFrame) window.requestAnimationFrame(fitTitles);
   }
 
   /* Make every course title fully visible.
-     - Three-day bands keep the title on ONE line: the text is shrunk just enough to fit.
+     - Three-day bands keep the title on ONE line: the text is shrunk until the whole title fits. After every change
+       the title is measured again, because phones round text sizes differently, and this repeats until it fits.
      - If that would need text smaller than ONE_LINE_MIN_PX, the title wraps onto a second line instead.
      - Two-day pieces of a split course always wrap on whole words.
      - A word is never cut in half: if one word is too wide, the text is shrunk a little more (never below MIN_TITLE_PX).
-     Measured on the real screen, so it works on any phone width. */
+     Measured on the real screen, so it works on any phone width and font. */
   var ONE_LINE_MIN_PX = 8.5, MIN_TITLE_PX = 7.5;
-  function fitTitles() {
+
+  function titleWidth(e) {                                   // the true width of the text, even when it is clipped
+    var w = 0;
+    try {
+      var r = document.createRange();
+      r.selectNodeContents(e);
+      if (typeof r.getBoundingClientRect === 'function') w = r.getBoundingClientRect().width;
+    } catch (err) { /* fall back to the box measure below */ }
+    if (e.scrollWidth > e.clientWidth) w = Math.max(w, e.scrollWidth);      // only counts when the text really overflows its box
+    return w;
+  }
+  function fontPx(e) { return parseFloat(window.getComputedStyle(e).fontSize); }
+
+  function fitTitles() {                                     // cosmetic only: an error here must never affect the calendar
+    try { fitTitlesNow(); } catch (err) { /* leave the titles as they are */ }
+  }
+  function fitTitlesNow() {
     var all = weeksEl.querySelectorAll('.band:not(.narrow) .n');
-    var i, n, one = [], wrapping = [];
-    for (i = 0; i < all.length; i++) {                                         // start every title from its normal look
-      n = all[i]; n.style.fontSize = ''; n.classList.remove('wrap');
-      if (n.parentNode.classList.contains('tight')) wrapping.push(n); else one.push(n);
+    var i, one = [], wrapping = [];
+    for (i = 0; i < all.length; i++) {                       // start every title from its normal look
+      all[i].style.fontSize = ''; all[i].classList.remove('wrap');
+      if (all[i].parentNode.classList.contains('tight')) wrapping.push(all[i]); else one.push(all[i]);
     }
-    var m = one.map(function (e) { return [e.scrollWidth, e.clientWidth, parseFloat(window.getComputedStyle(e).fontSize)]; });   // read all, then write all
-    one.forEach(function (e, j) {
-      var sw = m[j][0], cw = m[j][1], fs = m[j][2];
-      if (cw > 0 && sw > cw) {
-        var size = Math.floor(fs * cw / sw * 10) / 10 - 0.1;
-        if (size >= ONE_LINE_MIN_PX) e.style.fontSize = size + 'px';
-        else { e.classList.add('wrap'); e.style.fontSize = '10px'; wrapping.push(e); }
-      }
-    });
-    var m2 = wrapping.map(function (e) { return [e.scrollWidth, e.clientWidth, parseFloat(window.getComputedStyle(e).fontSize)]; });
-    wrapping.forEach(function (e, j) {                                          // no single word wider than the line
-      var sw = m2[j][0], cw = m2[j][1], fs = m2[j][2];
-      if (cw > 0 && sw > cw) e.style.fontSize = Math.max(MIN_TITLE_PX, Math.floor(fs * cw / sw * 10) / 10 - 0.1) + 'px';
-    });
+
+    /* one-line titles: shrink, re-measure, repeat (at most 8 rounds) */
+    var pending = one;
+    for (var round = 0; round < 8 && pending.length; round++) {
+      var m = pending.map(function (e) { return [titleWidth(e), e.clientWidth, fontPx(e)]; });     // read everything first
+      var again = [];
+      pending.forEach(function (e, j) {
+        var tw = m[j][0], cw = m[j][1], fs = m[j][2];
+        if (cw > 0 && tw > cw - 1) {                          // keep 1px to spare
+          var size = Math.floor(fs * (cw - 2) / tw * 10) / 10;
+          if (size >= ONE_LINE_MIN_PX) { e.style.fontSize = size + 'px'; again.push(e); }
+          else { e.classList.add('wrap'); e.style.fontSize = '10px'; wrapping.push(e); }
+        }
+      });
+      pending = again;                                        // the ones we changed are checked again next round
+    }
+    pending.forEach(function (e) { e.classList.add('wrap'); e.style.fontSize = '10px'; wrapping.push(e); });   // never leave a title cut off
+
+    /* wrapping titles: no single word may be wider than the line */
+    pending = wrapping;
+    for (round = 0; round < 8 && pending.length; round++) {
+      var m2 = pending.map(function (e) { return [titleWidth(e), e.clientWidth, fontPx(e)]; });
+      var again2 = [];
+      pending.forEach(function (e, j) {
+        var tw = m2[j][0], cw = m2[j][1], fs = m2[j][2];
+        if (cw > 0 && tw > cw - 0.5 && fs > MIN_TITLE_PX) {
+          e.style.fontSize = Math.max(MIN_TITLE_PX, Math.floor(fs * (cw - 1.5) / tw * 10) / 10) + 'px';
+          again2.push(e);
+        }
+      });
+      pending = again2;
+    }
   }
   var resizeTimer = null;
   window.addEventListener('resize', function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(fitTitles, 120); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitles);
+  window.addEventListener('load', fitTitles);
+  window.addEventListener('orientationchange', function () { setTimeout(fitTitles, 250); });
 
   function makeCell(sg, carriesNote) {
     var c = sg.c;
