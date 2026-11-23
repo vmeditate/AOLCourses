@@ -83,11 +83,9 @@
   <div class="legend" aria-label="Legend">
     <div><span class="sw sky"></span>SKY Breath Meditation</div>
     <div><span class="sw man"></span>Mantra Meditation</div>
-    <div><span class="sw dash"></span>Online</div>
-    <div><span class="sw solid"></span>In person</div>
   </div>
   <div class="month" id="month"></div>
-  <div class="dow" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+  <div class="dow" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
   <div class="weeks" id="weeks"></div>
   <div class="foot" id="foot"></div>
 </div>
@@ -97,7 +95,7 @@
   'use strict';
 
   /* ===== SETTINGS: edit these two lines ===== */
-  var API_URL  = 'https://script.google.com/macros/s/AKfycbzx0lFML0X7eBWtrOh3Zq6gbbtjQXFEu0F0s-yG9hBuGxI84sDzFveavSrXgBRqrFXh3A/exec';   // the Apps Script web app link (ends in /exec)
+  var API_URL  = 'PASTE_YOUR_WEB_APP_URL_HERE';   // the Apps Script web app link (ends in /exec)
   var LOGO_URL = 'logo.png';                       // the logo file in the same folder, or '' to show text
   /* ========================================= */
 
@@ -117,7 +115,7 @@
   function parseYMD(s) { var p = String(s).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
   function addDays(d, n) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() + n); return x; }
   function diffDays(a, b) { return Math.round((b - a) / 86400000); }
-  function weekStart(d) { return addDays(d, -d.getDay()); }
+  function weekStart(d) { return addDays(d, -((d.getDay() + 6) % 7)); }      // weeks run Monday to Sunday
   function today0() { var t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); }
 
   function fmtRange(s, e) {
