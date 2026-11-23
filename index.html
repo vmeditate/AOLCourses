@@ -74,33 +74,26 @@ var AOL_DATA = null;
   .wk { border-top: 1px solid var(--line); padding-bottom: 8px; }
   .week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); column-gap: 2px; row-gap: 4px; }
   .week.again { border-top: 1px dashed var(--line); margin-top: 6px; }
-  .day { grid-row: 1; position: relative; z-index: 1; pointer-events: none; padding: 4px 0 0; text-align: center; font-size: 11px; color: var(--muted); }
+  .day { grid-row: 1; padding: 4px 0 0; text-align: center; font-size: 11px; font-weight: 800; color: var(--muted); }
   .day.out { opacity: .4; }
   .week.again .day { opacity: .45; }
-  /* dates that sit inside a band take the band's text colour and are always fully visible */
-  .day.cov { font-weight: 800; opacity: 1; }
-  .day.cov.out { opacity: .6; }
-  .week.again .day.cov { opacity: 1; }
-  .day.cov-sky { color: var(--sky-text); }
-  .day.cov-mantra { color: var(--man-text); }
-  .day.cov-other { color: var(--oth-text); }
   .day.today span { display: inline-block; min-width: 18px; padding: 0 3px; border-radius: 9px; background: #FF9248; color: #3A1800; font-weight: 800; text-align: center; }
 
-  .cell { grid-row: 1 / span 2; min-width: 0; display: flex; }      /* the band covers the date row AND the text row */
-  .band { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; min-width: 0; min-height: 56px; margin: 0 4px;
-    padding: 22px 6px 4px; border-width: 2px; border-style: solid; border-radius: 12px; text-decoration: none;
+  .cell { grid-row: 2; min-width: 0; align-self: start; }
+  .band { display: flex; flex-direction: column; justify-content: center; min-width: 0; min-height: 34px; margin: 0 4px;
+    padding: 3px 6px; border-width: 2px; border-style: solid; border-radius: 12px; text-decoration: none;
     box-sizing: border-box; font: inherit; }
   a.band { cursor: pointer; transition: box-shadow .12s, transform .12s; }
   a.band:hover { box-shadow: 0 3px 10px rgba(122, 58, 0, .22); transform: translateY(-1px); }
   a.band:focus-visible { outline: 3px solid #4A2A10; outline-offset: 2px; }
   .band .n { font-size: 11.5px; font-weight: 800; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .band.tight .n { white-space: normal; overflow-wrap: anywhere; }      /* two-day pieces are too narrow for one line */
+  .band.tight .n, .band .n.wrap { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: normal; }   /* wrap on whole words, never cut the title */
   .band .m { font-size: 10px; font-weight: 700; line-height: 1.15; overflow-wrap: anywhere; }
   .band .sp { margin-top: 3px; font-size: 10px; font-style: italic; font-weight: 700; line-height: 1.2; overflow-wrap: anywhere; color: #1A47A8; }
-  .band.tight { padding: 22px 5px 4px; }
+  .band.tight { padding: 3px 5px; }
   .band.tight .n { font-size: 10.5px; }
   .band.tight .m, .band.tight .sp { font-size: 9.5px; }
-  .band.narrow { padding: 22px 2px 4px; margin: 0 2px; }
+  .band.narrow { padding: 3px 2px; margin: 0 2px; }
   .band.narrow .n { font-size: 9px; letter-spacing: -.1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .band.narrow .m { font-size: 8.5px; }
   .band.online { border-style: dashed; }
@@ -289,14 +282,9 @@ var AOL_DATA = null;
       for (var k = 0; k < rows; k++) {
         var row = el('div', 'week' + (k > 0 ? ' again' : ''));
         row.style.gridTemplateRows = wk.lanes ? '20px auto' : '20px';
-        var covered = {};                                                    // which columns of this row sit inside a band
-        wk.segs.forEach(function (sg) {
-          if (sg.lane === k) for (var q = 0; q < sg.span; q++) covered[sg.col + q] = typeOf(sg.c);
-        });
         for (var d = 0; d < 7; d++) {
           var day = addDays(wk.ws, d);
-          var cell = el('div', 'day' + (day.getMonth() !== m ? ' out' : '') + (ymd(day) === todayS ? ' today' : '') +
-            (covered[d + 1] ? ' cov cov-' + covered[d + 1] : ''));
+          var cell = el('div', 'day' + (day.getMonth() !== m ? ' out' : '') + (ymd(day) === todayS ? ' today' : ''));
           cell.style.gridColumn = String(d + 1);
           cell.appendChild(el('span', null, String(day.getDate())));
           row.appendChild(cell);
@@ -320,22 +308,34 @@ var AOL_DATA = null;
     fitTitles();
   }
 
-  /* Keep every course title on ONE line: if a title is wider than its band, shrink its text just enough
-     to fit (never below MIN_TITLE_PX). Measured on the real screen, so it works on any phone width. */
-  var MIN_TITLE_PX = 7.5;
+  /* Make every course title fully visible.
+     - Three-day bands keep the title on ONE line: the text is shrunk just enough to fit.
+     - If that would need text smaller than ONE_LINE_MIN_PX, the title wraps onto a second line instead.
+     - Two-day pieces of a split course always wrap on whole words.
+     - A word is never cut in half: if one word is too wide, the text is shrunk a little more (never below MIN_TITLE_PX).
+     Measured on the real screen, so it works on any phone width. */
+  var ONE_LINE_MIN_PX = 8.5, MIN_TITLE_PX = 7.5;
   function fitTitles() {
-    var list = weeksEl.querySelectorAll('.band:not(.tight):not(.narrow) .n');
-    var i, n;
-    for (i = 0; i < list.length; i++) list[i].style.fontSize = '';           // start from the normal size
-    var sizes = [];
-    for (i = 0; i < list.length; i++) {                                       // read everything first (one layout pass)
-      n = list[i];
-      sizes.push([n.scrollWidth, n.clientWidth, parseFloat(window.getComputedStyle(n).fontSize)]);
+    var all = weeksEl.querySelectorAll('.band:not(.narrow) .n');
+    var i, n, one = [], wrapping = [];
+    for (i = 0; i < all.length; i++) {                                         // start every title from its normal look
+      n = all[i]; n.style.fontSize = ''; n.classList.remove('wrap');
+      if (n.parentNode.classList.contains('tight')) wrapping.push(n); else one.push(n);
     }
-    for (i = 0; i < list.length; i++) {
-      var sw = sizes[i][0], cw = sizes[i][1], fs = sizes[i][2];
-      if (cw > 0 && sw > cw) list[i].style.fontSize = Math.max(MIN_TITLE_PX, Math.floor(fs * cw / sw * 10) / 10 - 0.1) + 'px';
-    }
+    var m = one.map(function (e) { return [e.scrollWidth, e.clientWidth, parseFloat(window.getComputedStyle(e).fontSize)]; });   // read all, then write all
+    one.forEach(function (e, j) {
+      var sw = m[j][0], cw = m[j][1], fs = m[j][2];
+      if (cw > 0 && sw > cw) {
+        var size = Math.floor(fs * cw / sw * 10) / 10 - 0.1;
+        if (size >= ONE_LINE_MIN_PX) e.style.fontSize = size + 'px';
+        else { e.classList.add('wrap'); e.style.fontSize = '10px'; wrapping.push(e); }
+      }
+    });
+    var m2 = wrapping.map(function (e) { return [e.scrollWidth, e.clientWidth, parseFloat(window.getComputedStyle(e).fontSize)]; });
+    wrapping.forEach(function (e, j) {                                          // no single word wider than the line
+      var sw = m2[j][0], cw = m2[j][1], fs = m2[j][2];
+      if (cw > 0 && sw > cw) e.style.fontSize = Math.max(MIN_TITLE_PX, Math.floor(fs * cw / sw * 10) / 10 - 0.1) + 'px';
+    });
   }
   var resizeTimer = null;
   window.addEventListener('resize', function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(fitTitles, 120); });
