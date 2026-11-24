@@ -79,11 +79,52 @@ var AOL_DATA = null;
   h1 { margin: 0; font-size: clamp(18px, 5.2vw, 26px); line-height: 1.15; font-weight: 900; color: #4A2000; }
   .tag { grid-column: 1 / -1; margin: 0; font-size: 12.5px; line-height: 1.35; font-weight: 700; color: #5E2C00; }
 
-  .about { padding: 14px 20px 4px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .about p { margin: 0; font-size: 13px; line-height: 1.4; font-weight: 600; color: var(--text); }
-  .about b { font-weight: 900; }
-  .about .sky { color: var(--sky-text); }
-  .about .man { color: var(--man-text); }
+  /* the two courses side by side: title and description in each card (Option B, text only) */
+  .courses { padding: 16px 16px 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: stretch; }
+  .course { border-radius: 22px; border: 2px solid; padding: 16px 14px 18px; display: flex; flex-direction: column; min-width: 0; }
+  .course.sky { background: #F8F2E2; border-color: #E6DAB5; }
+  .course.mantra { background: #F9EEF2; border-color: #EBCDD8; }
+  .course h2 { margin: 0; font-size: 16px; line-height: 1.2; font-weight: 900; }
+  .course.sky h2 { color: var(--sky-text); }
+  .course.mantra h2 { color: var(--man-text); }
+  .course .rule { width: 30px; height: 3px; border-radius: 2px; margin: 9px 0; }
+  .course.sky .rule { background: var(--sky-border); }
+  .course.mantra .rule { background: var(--man-border); }
+  .course p { margin: 0; font-size: 13px; line-height: 1.5; font-weight: 600; color: var(--text); }
+
+  /* the "View all courses" button and its popup */
+  .viewall-wrap { padding: 14px 16px 6px; }
+  .viewall { width: 100%; height: 48px; border: 0; border-radius: 24px; background: #FF9248; color: #3A1800; font: inherit; font-size: 15px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; box-shadow: 0 6px 14px rgba(255, 146, 72, .35); }
+  .viewall:disabled { opacity: .55; cursor: default; box-shadow: none; }
+  .viewall:not(:disabled):hover { background: #FF8A3A; }
+  .viewall:focus-visible, .xbtn:focus-visible { outline: 3px solid #4A2A10; outline-offset: 2px; }
+  .modal { position: fixed; inset: 0; z-index: 20; background: rgba(74, 32, 0, .5); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .modal[hidden] { display: none; }
+  .sheet { width: 100%; max-width: 560px; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; overscroll-behavior: contain;
+    background: #fff; border-radius: 26px; padding: 18px 16px; box-shadow: 0 24px 50px rgba(74, 32, 0, .35); }
+  .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .sheet h2 { margin: 0; font-size: 19px; line-height: 1.2; font-weight: 900; color: #4A2000; }
+  .sheet-sub { margin: 3px 0 0; font-size: 12px; font-weight: 700; color: var(--muted); }
+  .xbtn { flex: none; width: 44px; height: 44px; margin: -6px -8px 0 0; border: 0; border-radius: 22px; background: #FFF1E2; color: #4A2000; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; }
+  .cols { margin-top: 14px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 10px; row-gap: 14px; align-items: start; }
+  .col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .col.wide { grid-column: 1 / -1; }
+  .colhead { border-radius: 14px; border: 2px solid; padding: 9px 10px; min-height: 46px; display: flex; align-items: center; font-size: 13px; line-height: 1.2; font-weight: 900; }
+  .colhead.sky { background: #F8F2E2; border-color: #E6DAB5; color: var(--sky-text); }
+  .colhead.mantra { background: #F9EEF2; border-color: #EBCDD8; color: var(--man-text); }
+  .colhead.other { background: #F4F1EC; border-color: #DDD7CD; color: var(--oth-text); }
+  .item { display: block; border-width: 2px; border-style: solid; border-radius: 12px; padding: 8px 10px; text-decoration: none; }
+  a.item { cursor: pointer; transition: box-shadow .12s, transform .12s; }
+  a.item:hover { box-shadow: 0 3px 10px rgba(122, 58, 0, .22); transform: translateY(-1px); }
+  a.item:focus-visible { outline: 3px solid #4A2A10; outline-offset: 2px; }
+  .item.online { border-style: dashed; }
+  .item .d { font-size: 14px; font-weight: 900; line-height: 1.2; }
+  .item .m { margin-top: 2px; font-size: 11px; font-weight: 700; line-height: 1.25; }
+  .item .m + .m { margin-top: 0; }
+  .item .sp { margin-top: 3px; font-size: 10.5px; font-style: italic; font-weight: 700; line-height: 1.2; color: #1A47A8; }
+  .none { padding: 6px 4px; font-size: 12px; font-weight: 700; color: var(--muted); }
 
   .nav { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px 4px; }
   .nav button { width: 44px; height: 44px; border: 2px solid #F0C9A0; border-radius: 22px; background: #FFE9D2; color: #4A2000; cursor: pointer;
@@ -161,9 +202,24 @@ var AOL_DATA = null;
     <span class="portrait-wrap"><img class="portrait" src="gurudev.jpg" width="72" height="72" alt="Gurudev" decoding="async" onerror="this.parentNode.remove()"></span>
     <p class="tag">Explore upcoming courses and find one near you.</p>
   </div>
-  <div class="about">
-    <p><b class="sky">SKY Breath Meditation</b> &ndash; A powerful breathing technique to energize the body, calm the mind and release stress.</p>
-    <p><b class="man">Mantra Meditation</b> &ndash; A simple effortless meditation practice with a personal mantra.</p>
+  <section class="courses" aria-label="Our courses">
+    <article class="course sky">
+      <h2>SKY Breath Meditation</h2>
+      <div class="rule"></div>
+      <p>A powerful breathing technique to energize the body, calm the mind and release stress.</p>
+    </article>
+    <article class="course mantra">
+      <h2>Mantra Meditation</h2>
+      <div class="rule"></div>
+      <p>A simple effortless meditation practice with a personal mantra.</p>
+    </article>
+  </section>
+  <div class="viewall-wrap">
+    <button type="button" class="viewall" id="viewAll" aria-haspopup="dialog" disabled>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#3A1800" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 5 H17 M7 10 H17 M7 15 H17"/><circle cx="3.5" cy="5" r=".8" fill="#3A1800"/><circle cx="3.5" cy="10" r=".8" fill="#3A1800"/><circle cx="3.5" cy="15" r=".8" fill="#3A1800"/></svg>
+      View all courses
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#3A1800" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3 L11 8 L6 13"/></svg>
+    </button>
   </div>
   <div class="nav" id="nav">
     <button type="button" id="prev" aria-label="Previous month" disabled>
@@ -176,6 +232,21 @@ var AOL_DATA = null;
   </div>
   <div class="dow" id="dow" aria-hidden="true"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
   <div class="weeks" id="weeks" aria-busy="true"><div class="sk" aria-hidden="true"><i></i><i></i><i></i></div><span class="vh">Loading courses</span></div>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-head">
+      <div>
+        <h2 id="sheetTitle">All upcoming courses</h2>
+        <p class="sheet-sub">In date order. Tap a course to register.</p>
+      </div>
+      <button type="button" class="xbtn" id="closeModal" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5 L12.5 12.5 M12.5 3.5 L3.5 12.5"/></svg>
+      </button>
+    </div>
+    <div class="cols" id="cols"></div>
+  </div>
 </div>
 
 <script>
@@ -253,6 +324,8 @@ var AOL_DATA = null;
   function setCourses(courses) {
     var todayS = ymd(today0());
     state.courses = courses.filter(function (c) { return c && c.start && c.end && c.end >= todayS; }).sort(sortCourses);
+    buildList();
+    viewAllBtn.disabled = false;
     state.months = monthsWithCourses(state.courses);
     /* the calendar always opens on the current month; after it, only months that have courses */
     var td = today0(), thisMonth = td.getFullYear() + '-' + pad(td.getMonth() + 1);
@@ -455,6 +528,80 @@ var AOL_DATA = null;
     cell.appendChild(band);
     return cell;
   }
+
+  /* ---------- the "View all courses" popup: SKY on the left, Mantra on the right, each in date order ---------- */
+  var modalEl = document.getElementById('modal');
+  var colsEl = document.getElementById('cols');
+  var viewAllBtn = document.getElementById('viewAll');
+  var closeBtn = document.getElementById('closeModal');
+  var lastFocus = null;
+
+  function makeItem(c) {
+    var href = safeUrl(c.url);
+    var cls = 'item t-' + typeOf(c) + (c.mode === 'online' ? ' online' : '');
+    var item;
+    if (href) {
+      item = el('a', cls);
+      item.href = href;
+      if (OPEN_IN_NEW_TAB) { item.target = '_blank'; item.rel = 'noopener noreferrer'; }
+    } else {
+      item = el('div', cls);
+    }
+    item.appendChild(el('div', 'd', fmtRange(c.start, c.end)));
+    item.appendChild(el('div', 'm', modeLabel(c)));
+    if (c.mode !== 'online' && c.location) item.appendChild(el('div', 'm', c.location));
+    if (c.notes) item.appendChild(el('div', 'sp', c.notes));
+    var label = c.name + ', ' + modeLabel(c) + (c.mode !== 'online' && c.location ? ' in ' + c.location : '') + ', ' + fmtRange(c.start, c.end);
+    if (c.notes) label += ', ' + c.notes;
+    if (href) label += '. Opens the course page';
+    item.setAttribute('aria-label', label);
+    return item;
+  }
+
+  function makeCol(title, type, list, wide) {
+    var col = el('div', 'col' + (wide ? ' wide' : ''));
+    col.appendChild(el('div', 'colhead ' + type, title));
+    if (!list.length) col.appendChild(el('div', 'none', 'No upcoming courses'));
+    list.forEach(function (c) { col.appendChild(makeItem(c)); });
+    return col;
+  }
+
+  function buildList() {
+    var groups = { sky: [], mantra: [], other: [] };
+    state.courses.forEach(function (c) { groups[typeOf(c)].push(c); });          // state.courses is already in date order
+    var frag = document.createDocumentFragment();
+    frag.appendChild(makeCol('SKY Breath Meditation', 'sky', groups.sky, false));
+    frag.appendChild(makeCol('Mantra Meditation', 'mantra', groups.mantra, false));
+    if (groups.other.length) frag.appendChild(makeCol('Other courses', 'other', groups.other, true));
+    colsEl.textContent = '';
+    colsEl.appendChild(frag);
+  }
+
+  function openModal() {
+    lastFocus = document.activeElement;
+    modalEl.hidden = false;
+    document.body.style.overflow = 'hidden';
+    closeBtn.focus();
+  }
+  function closeModal() {
+    modalEl.hidden = true;
+    document.body.style.overflow = '';
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  viewAllBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modalEl.addEventListener('click', function (e) { if (e.target === modalEl) closeModal(); });
+  document.addEventListener('keydown', function (e) {
+    if (modalEl.hidden) return;
+    if (e.key === 'Escape') { closeModal(); return; }
+    if (e.key === 'Tab') {                                   // keep Tab inside the popup while it is open
+      var f = [].slice.call(modalEl.querySelectorAll('a[href], button:not([disabled])'));
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
 
   prevBtn.addEventListener('click', function () { if (state.idx > 0) { state.idx--; renderMonth(); } });
   nextBtn.addEventListener('click', function () { if (state.idx < state.months.length - 1) { state.idx++; renderMonth(); } });
