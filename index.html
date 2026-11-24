@@ -65,24 +65,22 @@ var AOL_DATA = null;
     font-family: "Nunito", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
   }
   .panel { max-width: 560px; margin: 0 auto; background: var(--panel); border-radius: 32px; overflow: hidden; padding-bottom: 18px; }
-  .hero { background: var(--hero-bg); padding: 16px 20px; border-radius: 0 0 28px 28px;
-    display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 14px; }
-  .hero-text { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-  /* Gurudev's photo sits on the right as a rounded square, sized to fit the header without making it taller */
-  .portrait-wrap { display: block; filter: drop-shadow(0 6px 12px rgba(122, 58, 0, .30)); }
-  .portrait { display: block; width: 84px; height: 84px; border-radius: 15px; object-fit: cover; }
-  @media (min-width: 560px) { .portrait { width: 94px; height: 94px; border-radius: 16px; } }
-  @media (max-width: 340px) { .portrait { width: 72px; height: 72px; border-radius: 14px; } h1 { font-size: clamp(18px, calc((100vw - 136px) / 10.4), 28px); } }
-  .logo { align-self: flex-start; min-width: 132px; height: 34px; padding: 0 14px; background: #fff; border-radius: 17px;
-    display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; letter-spacing: .6px; color: #7A3A00; }
-  .logo img { height: 24px; width: auto; max-width: 160px; object-fit: contain; display: block; }
-  h1 { margin: 0; font-size: clamp(18px, calc((100vw - 164px) / 10.4), 28px); line-height: 1.1; font-weight: 900; color: #4A2000; }
-  .tag { margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #5E2C00; }
+  .hero { background: var(--hero-bg); padding: 12px 18px; border-radius: 0 0 28px 28px;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 12px; row-gap: 6px; }
+  .hero-text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  /* Gurudev's photo sits on the right as a rounded square */
+  .portrait-wrap { display: block; filter: drop-shadow(0 4px 8px rgba(122, 58, 0, .28)); }
+  .portrait { display: block; width: 72px; height: 72px; border-radius: 14px; object-fit: cover; }
+  @media (min-width: 560px) { .portrait { width: 84px; height: 84px; border-radius: 15px; } }
+  @media (max-width: 340px) { .portrait { width: 64px; height: 64px; border-radius: 13px; } }
+  .logo { align-self: flex-start; min-width: 118px; height: 28px; padding: 0 12px; background: #fff; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; letter-spacing: .6px; color: #7A3A00; }
+  .logo img { height: 20px; width: auto; max-width: 150px; object-fit: contain; display: block; }
+  h1 { margin: 0; font-size: clamp(18px, 5.2vw, 26px); line-height: 1.15; font-weight: 900; color: #4A2000; }
+  .tag { grid-column: 1 / -1; margin: 0; font-size: 12.5px; line-height: 1.35; font-weight: 700; color: #5E2C00; }
 
   .about { padding: 14px 20px 4px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .about p { min-width: 0; }
-  .about p { margin: 0; font-size: 13px; line-height: 1.4; font-weight: 600; color: var(--text); white-space: nowrap; }
-  .about p.wrap { white-space: normal; }
+  .about p { margin: 0; font-size: 13px; line-height: 1.4; font-weight: 600; color: var(--text); }
   .about b { font-weight: 900; }
   .about .sky { color: var(--sky-text); }
   .about .man { color: var(--man-text); }
@@ -157,21 +155,15 @@ var AOL_DATA = null;
 <div class="panel">
   <div class="hero">
     <div class="hero-text">
-      <div class="logo" id="logo"><img src="logo.png" alt="Art of Living" height="24" decoding="async" onerror="this.parentNode.textContent='THE ART OF LIVING'"></div>
-      <div class="hero-title">
-        <h1>Upcoming Courses</h1>
-        <p class="tag">Tap a course to register</p>
-      </div>
+      <div class="logo" id="logo"><img src="logo.png" alt="Art of Living" height="20" decoding="async" onerror="this.parentNode.textContent='THE ART OF LIVING'"></div>
+      <h1>Transform Your Life Through Meditation</h1>
     </div>
-    <span class="portrait-wrap"><img class="portrait" src="gurudev.jpg" width="84" height="84" alt="Gurudev" decoding="async" onerror="this.parentNode.remove()"></span>
+    <span class="portrait-wrap"><img class="portrait" src="gurudev.jpg" width="72" height="72" alt="Gurudev" decoding="async" onerror="this.parentNode.remove()"></span>
+    <p class="tag">Explore upcoming courses and find one near you.</p>
   </div>
-  <!-- Each description is fitted onto ONE line by the script below. The longer original wording was:
-       SKY Breath Meditation - A powerful breathing technique to energize the body, calm the mind and release stress.
-       Mantra Meditation - A simple effortless meditation practice with a personal mantra.
-       (too long for one line on a phone; hover text still shows the full SKY sentence on a computer) -->
   <div class="about">
-    <p title="A powerful breathing technique to energize the body, calm the mind and release stress."><b class="sky">SKY Breath Meditation</b> &ndash; Breathe to energize and calm the mind.</p>
-    <p title="A simple effortless meditation practice with a personal mantra."><b class="man">Mantra Meditation</b> &ndash; Simple meditation with a personal mantra.</p>
+    <p><b class="sky">SKY Breath Meditation</b> &ndash; A powerful breathing technique to energize the body, calm the mind and release stress.</p>
+    <p><b class="man">Mantra Meditation</b> &ndash; A simple effortless meditation practice with a personal mantra.</p>
   </div>
   <div class="nav" id="nav">
     <button type="button" id="prev" aria-label="Previous month" disabled>
@@ -420,30 +412,7 @@ var AOL_DATA = null;
       pending = again2;
     }
   }
-  /* The two course descriptions at the top: keep each on ONE line by shrinking the text to fit (never below
-     ABOUT_MIN_PX). If a screen is so narrow that even that is not enough, the line wraps instead of being cut. */
-  var ABOUT_MIN_PX = 9;
-  function fitAbout() {
-    try {
-      var list = document.querySelectorAll('.about p'), pending = [], i;
-      for (i = 0; i < list.length; i++) { list[i].style.fontSize = ''; list[i].classList.remove('wrap'); pending.push(list[i]); }
-      for (var round = 0; round < 8 && pending.length; round++) {
-        var m = pending.map(function (e) { return [titleWidth(e), e.clientWidth, fontPx(e)]; });
-        var again = [];
-        pending.forEach(function (e, j) {
-          var tw = m[j][0], cw = m[j][1], fs = m[j][2];
-          if (cw > 0 && tw > cw - 1) {
-            var size = Math.floor(fs * (cw - 2) / tw * 10) / 10;
-            if (size >= ABOUT_MIN_PX) { e.style.fontSize = size + 'px'; again.push(e); }
-            else { e.style.fontSize = ''; e.classList.add('wrap'); }
-          }
-        });
-        pending = again;
-      }
-      pending.forEach(function (e) { e.style.fontSize = ''; e.classList.add('wrap'); });
-    } catch (err) { /* cosmetic only */ }
-  }
-  function fitAll() { fitTitles(); fitAbout(); }
+  function fitAll() { fitTitles(); }
 
   var resizeTimer = null;
   window.addEventListener('resize', function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(fitAll, 120); });
@@ -554,7 +523,6 @@ var AOL_DATA = null;
     });
   }
 
-  fitAbout();
   start();
 })();
 </script>
